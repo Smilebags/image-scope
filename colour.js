@@ -11,17 +11,20 @@ export function sRGBToLinearsRGB({ r, g, b }) {
   const linearB = Math.pow(b, 2.2);
   return { r: linearR, g: linearG, b: linearB };
 }
+
 export function linearsRGBToCIEXYZ({ r, g, b }) {
   const X = r * 0.4124 + g * 0.3576 + b * 0.1805;
   const Y = r * 0.2126 + g * 0.7152 + b * 0.0722;
   const Z = r * 0.0193 + g * 0.1192 + b * 0.9505;
   return { X, Y, Z };
 }
-function CIEXYZtoCIExyY({ X, Y, Z }) {
+
+export function CIEXYZtoCIExyY({ X, Y, Z }) {
   const x = X / (X + Y + Z);
   const y = Y / (X + Y + Z);
   return { x, y, Y };
 }
+
 export function CIEXYZtoCIELAB(xyz) {
   const { X, Y, Z } = xyz;
   const x = X / 95.047;

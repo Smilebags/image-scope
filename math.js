@@ -1,6 +1,4 @@
 
-// point is vec4, viewTransform is mat4
-// return camera frustrum coordinate vec4
 export function vec4Mat4Multiply(point, viewTransform) {
   const a = point;
   const b = viewTransform;
@@ -11,8 +9,10 @@ export function vec4Mat4Multiply(point, viewTransform) {
     a[0] * b[3] + a[1] * b[7] + a[2] * b[11] + a[3] * b[15],
   ];
 }
-// a and b are mat4
-export function mat4Multiply(a, b) {
+
+export function mat4Multiply(first, then) {
+  const a = first;
+  const b = then;
   return [
     a[0] * b[0] + a[1] * b[4] + a[2] * b[8] + a[3] * b[12],
     a[0] * b[1] + a[1] * b[5] + a[2] * b[9] + a[3] * b[13],
