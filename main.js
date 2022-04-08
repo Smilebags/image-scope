@@ -2,18 +2,19 @@ import {
   createImageFromFile,
   renderImagePreviewCanvas,
   createScopePoints,
-  renderScope,
+  // renderScope,
   generateViewTransform,
 } from './scope.js';
+import { GLScopeViewer } from './webgl.js';
+
 
 const scopeSize = 1024;
-const samplingResolution = 256;
+const samplingResolution = 512;
 
-const worldScale = { x: 0.03, y: 0.03, z: 0.08 };
-const scopeCenter = { x: 0, y: 0, z: 3 };
+const worldScale = { x: 2.5, y: 2.5, z: 1 };
+const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 };
 
-let t = 0;
-const perspectiveStrength = 0;
+const perspectiveStrength = 0.1;
 
 const fileInput = document.getElementById('file-input');
 const imagePreviewEl = document.getElementById('image-preview');
@@ -23,10 +24,12 @@ resultEl.width = scopeSize;
 resultEl.height = scopeSize;
 
 const imagePreviewCtx = imagePreviewEl.getContext('2d');
-const resultCtx = resultEl.getContext('2d');
 
-resultCtx.width = scopeSize;
-resultCtx.height = scopeSize;
+const resultCtx = resultEl.getContext('webgl2');
+if (!resultCtx) {
+  alert('Your browser does not support WebGL2');
+}
+
 
 fileInput.addEventListener('change', async e => {
   fileInput.disabled = true;
@@ -40,13 +43,18 @@ async function processNewFile(file, sourceCtx, scopeCtx) {
   renderImagePreviewCanvas(image, sourceCtx, samplingResolution);
   const previewImageData = sourceCtx.getImageData(0, 0, sourceCtx.width, sourceCtx.height);
   const points = createScopePoints(previewImageData);
-  t = 0;
-  while (t < 1) {
+
+  const viewer = new GLScopeViewer(scopeCtx);
+  await viewer.setPoints(points);
+  const startTime = Date.now();
+  while (true) {
+    const t = (Date.now() - startTime) / 1000 / 10;
     const viewTransform = generateViewTransform(t, scopeCenter, worldScale, perspectiveStrength);
-    await renderScope(points, scopeCtx, t, scopeSize, viewTransform);
+    await viewer.renderScope(t, scopeSize, viewTransform);
     await sleep(1);
-    t += 0.01;
   }
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+

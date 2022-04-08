@@ -9,7 +9,8 @@ import {
   normaliseuInt8,
   sRGBToLinearsRGB,
   linearsRGBToCIEXYZ,
-  CIEXYZtoCIELAB
+  CIEXYZtoCIELAB,
+  CIEXYZtoCIExyY,
 } from './colour.js';
 
 export function createImageFromFile(file) {
@@ -163,11 +164,17 @@ function convertsRGBToxyz(rgb) {
   const norm = normaliseuInt8(rgb);
   const linear = sRGBToLinearsRGB(norm);
   const XYZ = linearsRGBToCIEXYZ(linear);
-  const lab = CIEXYZtoCIELAB(XYZ);
+  // const lab = CIEXYZtoCIELAB(XYZ);
+  // return {
+  //   x: isNaN(lab.a) ? 0 : lab.a,
+  //   y: isNaN(lab.b) ? 0 : lab.b,
+  //   z: isNaN(lab.L) ? 0 : lab.L,
+  // };
+  const xyY = CIEXYZtoCIExyY(XYZ);
   return {
-    x: isNaN(lab.a) ? 0 : lab.a,
-    y: isNaN(lab.b) ? 0 : lab.b,
-    z: isNaN(lab.L) ? 0 : lab.L,
+    x: isNaN(xyY.x) ? 0 : xyY.x,
+    y: isNaN(xyY.y) ? 0 : xyY.y,
+    z: isNaN(xyY.Y) ? 0 : xyY.Y,
   };
 }
 
@@ -175,8 +182,8 @@ function applyViewTransform(point, viewTransform) {
   const transformed = vec4Mat4Multiply([point.x, point.y, point.z, 1], viewTransform);
   return {
     ...point,
-    x: 0.5 + (transformed[0] / transformed[2]),
-    y: 0.5 + (transformed[1] / transformed[2]),
+    x: (transformed[0] / transformed[2]),
+    y: (transformed[1] / transformed[2]),
     z: transformed[2],
   };
 }
@@ -185,8 +192,8 @@ export function generateViewTransform(time, scopeCenter, worldScale, perspective
   const cameraTransform = [
     1, 0, 0, 0,
     0, 1, 0, 0,
-    0, 0, -perspectiveStrength, 0,
-    0, 0, 1, 1,
+    0, 0, -perspectiveStrength, 1,
+    0, 0, 0, 1,
   ];
   const worldTranslateTransform = [
     1, 0, 0, 0,
@@ -203,7 +210,7 @@ export function generateViewTransform(time, scopeCenter, worldScale, perspective
 
   const worldRotateTransform = mat4Multiply(
     createRotateXYTransform(time * 2 * Math.PI),
-    createRotateYZTransform(Math.PI / 3)
+    createRotateYZTransform(2 * Math.PI / 3)
   );
 
   const worldTransform = mat4Multiply(
