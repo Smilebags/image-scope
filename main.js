@@ -11,6 +11,11 @@ import { GLScopeViewer } from './webgl.js';
 const scopeSize = 1024;
 const samplingResolution = 512;
 
+const mouse = {
+  x: 0,
+  y: 0,
+};
+
 const worldScale = { x: 2.5, y: 2.5, z: 1 };
 const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 };
 
@@ -30,6 +35,21 @@ if (!resultCtx) {
   alert('Your browser does not support WebGL2');
 }
 
+resultEl.addEventListener('mousemove', (e) => {
+  const rect = resultEl.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width);
+  mouse.y = (e.clientY - rect.top) / rect.height;
+});
+
+resultEl.addEventListener('wheel', e => {
+  e.preventDefault();
+  const scale = -e.deltaY / 1000;
+  worldScale.x *= 1.0 + scale;
+  worldScale.y *= 1.0 + scale;
+  worldScale.z *= 1.0 + scale;
+  return false;
+});
+
 
 fileInput.addEventListener('change', async e => {
   fileInput.disabled = true;
@@ -46,13 +66,12 @@ async function processNewFile(file, sourceCtx, scopeCtx) {
 
   const viewer = new GLScopeViewer(scopeCtx);
   await viewer.setPoints(points);
-  const startTime = Date.now();
-  while (true) {
-    const t = (Date.now() - startTime) / 1000 / 10;
-    const viewTransform = generateViewTransform(t, scopeCenter, worldScale, perspectiveStrength);
-    await viewer.renderScope(t, scopeSize, viewTransform);
-    await sleep(1);
-  }
+  const render = () => {
+    requestAnimationFrame(render);
+    const viewTransform = generateViewTransform(mouse.x, mouse.y, scopeCenter, worldScale, perspectiveStrength);
+    viewer.renderScope(viewTransform);
+  };
+  render();
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

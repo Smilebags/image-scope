@@ -188,7 +188,7 @@ function applyViewTransform(point, viewTransform) {
   };
 }
 
-export function generateViewTransform(time, scopeCenter, worldScale, perspectiveStrength = 1) {
+export function generateViewTransform(x, y, scopeCenter, worldScale, perspectiveStrength = 1) {
   const cameraTransform = [
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -209,8 +209,8 @@ export function generateViewTransform(time, scopeCenter, worldScale, perspective
   ];
 
   const worldRotateTransform = mat4Multiply(
-    createRotateXYTransform(time * 2 * Math.PI),
-    createRotateYZTransform(2 * Math.PI / 3)
+    createRotateXYTransform(-x * 2 * Math.PI),
+    createRotateYZTransform(y * 2 * Math.PI / 2)
   );
 
   const worldTransform = mat4Multiply(

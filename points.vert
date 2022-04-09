@@ -6,7 +6,6 @@ in vec4 a_position;
 in vec4 a_color;
 
 uniform vec2 u_resolution;
-uniform float u_time;
 uniform mat4 u_view_transform;
 
 out vec4 v_color;
@@ -19,5 +18,6 @@ void main()
   gl_Position = position;
   gl_Position.z = 0.0 - gl_Position.z;
   gl_Position.z = gl_Position.z / (gl_Position.z + 1.0);
+  gl_Position.x = -gl_Position.x;
   gl_PointSize = 3.0;
 }

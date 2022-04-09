@@ -92,7 +92,7 @@ export class GLScopeViewer {
     this.gl.bindVertexArray(vao);
   }
 
-  async renderScope(t, scopeSize, viewTransform) {
+  renderScope(viewTransform) {
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
     this.gl.clearColor(0, 0, 0, 1);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
@@ -102,8 +102,6 @@ export class GLScopeViewer {
 
     const resolutionUniformLocation = this.gl.getUniformLocation(this.program, "u_resolution");
     this.gl.uniform2f(resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height);
-    const timeUniformLocation = this.gl.getUniformLocation(this.program, "u_time");
-    this.gl.uniform1f(timeUniformLocation, t);
     // 4x4 matrix
     const viewTransformUniformLocation = this.gl.getUniformLocation(this.program, "u_view_transform");
     this.gl.uniformMatrix4fv(viewTransformUniformLocation, false, viewTransform);
