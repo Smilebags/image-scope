@@ -2,22 +2,23 @@ import {
   createImageFromFile,
   renderImagePreviewCanvas,
   createScopePoints,
-  // renderScope,
   generateViewTransform,
 } from './scope.js';
 import { GLScopeViewer } from './webgl.js';
 
 
-const scopeSize = 1024;
-const samplingResolution = 512;
+const scopeSize = 1600;
+const samplingResolution = 1024;
 
 const mouse = {
   x: 0,
   y: 0,
 };
 
-const worldScale = { x: 2.5, y: 2.5, z: 1 };
-const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 };
+const worldScale = { x: 0.02, y: 0.02, z: 0.1 }; // or LAB
+const scopeCenter = { x: 0, y: 0, z: 5 }; // for LAB
+// const worldScale = { x: 2.5, y: 2.5, z: 1 }; // for xyY
+// const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 }; // for xyY
 
 const perspectiveStrength = 0.1;
 

@@ -164,18 +164,18 @@ function convertsRGBToxyz(rgb) {
   const norm = normaliseuInt8(rgb);
   const linear = sRGBToLinearsRGB(norm);
   const XYZ = linearsRGBToCIEXYZ(linear);
-  // const lab = CIEXYZtoCIELAB(XYZ);
-  // return {
-  //   x: isNaN(lab.a) ? 0 : lab.a,
-  //   y: isNaN(lab.b) ? 0 : lab.b,
-  //   z: isNaN(lab.L) ? 0 : lab.L,
-  // };
-  const xyY = CIEXYZtoCIExyY(XYZ);
+  const lab = CIEXYZtoCIELAB(XYZ);
   return {
-    x: isNaN(xyY.x) ? 0 : xyY.x,
-    y: isNaN(xyY.y) ? 0 : xyY.y,
-    z: isNaN(xyY.Y) ? 0 : xyY.Y,
+    x: isNaN(lab.a) ? 0 : lab.a,
+    y: isNaN(lab.b) ? 0 : lab.b,
+    z: isNaN(lab.L) ? 0 : lab.L,
   };
+  // const xyY = CIEXYZtoCIExyY(XYZ);
+  // return {
+  //   x: isNaN(xyY.x) ? 0 : xyY.x,
+  //   y: isNaN(xyY.y) ? 0 : xyY.y,
+  //   z: isNaN(xyY.Y) ? 0 : xyY.Y,
+  // };
 }
 
 function applyViewTransform(point, viewTransform) {
