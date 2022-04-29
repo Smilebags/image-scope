@@ -13,30 +13,37 @@ import {
   CIEXYZtoCIExyY,
 } from './colour.js';
 
-export function createImageFromFile(file) {
+export function createElementFromFile(file, element = 'img') {
   return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('Could not load image'));
-    image.src = URL.createObjectURL(file);
+    const el = document.createElement(element);
+    // el.onload = () => resolve(el);
+    // el.onerror = () => reject(new Error('Could not load image'));
+    el.src = URL.createObjectURL(file);
+    resolve(el);
   });
 }
 
-export function renderImagePreviewCanvas(image, ctx, targetResolution) {
-  const max = Math.max(image.naturalWidth, image.naturalHeight);
-  const fractionOfMax = {
-    width: image.naturalWidth / max,
-    height: image.naturalHeight / max,
-  };
-
-  const elWidth = Math.floor(fractionOfMax.width * targetResolution);
-  const elHeight = Math.floor(fractionOfMax.height * targetResolution);
-
-  ctx.canvas.width = elWidth;
-  ctx.canvas.height = elHeight;
-  ctx.width = elWidth;
-  ctx.height = elHeight;
-  ctx.drawImage(image, 0, 0, elWidth, elHeight);
+export function getImageDataFromSrcEl(image, ctx, targetResolution) {
+  if (image && image.videoHeight && image.videoWidth) {
+    const max = Math.max(image.videoWidth, image.videoHeight);
+    const fractionOfMax = {
+      width: image.videoWidth / max,
+      height: image.videoHeight / max,
+    };
+  
+    const elWidth = Math.floor(fractionOfMax.width * targetResolution);
+    const elHeight = Math.floor(fractionOfMax.height * targetResolution);
+  
+    ctx.canvas.width = elWidth;
+    ctx.canvas.height = elHeight;
+    ctx.width = elWidth;
+    ctx.height = elHeight;
+    ctx.drawImage(image, 0, 0, elWidth, elHeight);
+  } else {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
+  return ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
 export function createScopePoints(imageData) {

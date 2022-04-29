@@ -42,9 +42,11 @@ export class GLScopeViewer {
     this.pointsLength = 0;
   }
 
-  async setPoints(points) {
-    this.pointsLength = points.length;
+  async init() {
+    await this.#initShader();
+  }
 
+  async #initShader() {
     const vertexShaderSource = await fetchText('./points.vert');
     const fragmentShaderSource = await fetchText('./points.frag');
 
@@ -52,14 +54,31 @@ export class GLScopeViewer {
     const fragmentShader = createShader(this.gl, this.gl.FRAGMENT_SHADER, fragmentShaderSource);
 
     this.program = createProgram(this.gl, vertexShader, fragmentShader);
+  }
 
-    const positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position");
-    const positionBuffer = this.gl.createBuffer();
-
+  setPoints(points) {
+    if (!this.program) {
+      return;
+    }
+    if (!this.pointsLength) {
+      this.#initPoints();
+    }
+    this.pointsLength = points.length;
+    
     const positions = mapPointsToPositions(points);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
+    
+    const colors = mapPointsToColors(points);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(colors), this.gl.STATIC_DRAW);
+  }
 
+  #initPoints() {
+    const positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position");
+    
+    this.positionBuffer = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
 
     const vao = this.gl.createVertexArray();
     this.gl.bindVertexArray(vao);
@@ -74,10 +93,9 @@ export class GLScopeViewer {
     );
 
     const colorAttributeLocation = this.gl.getAttribLocation(this.program, "a_color");
-    const colorBuffer = this.gl.createBuffer();
-    const colors = mapPointsToColors(points);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colorBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(colors), this.gl.STATIC_DRAW);
+    this.colorBuffer = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
+  
     this.gl.enableVertexAttribArray(colorAttributeLocation);
     this.gl.vertexAttribPointer(
       colorAttributeLocation,
@@ -93,6 +111,9 @@ export class GLScopeViewer {
   }
 
   renderScope(viewTransform) {
+    if (!this.program || !this.pointsLength) {
+      return;
+    }
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
     this.gl.clearColor(0, 0, 0, 1);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);

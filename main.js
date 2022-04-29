@@ -1,6 +1,6 @@
 import {
-  createImageFromFile,
-  renderImagePreviewCanvas,
+  createElementFromFile,
+  getImageDataFromSrcEl,
   createScopePoints,
   generateViewTransform,
 } from './scope.js';
@@ -8,14 +8,16 @@ import { GLScopeViewer } from './webgl.js';
 
 
 const scopeSize = 1600;
-const samplingResolution = 1024;
+const samplingResolution = 256;
+
+let srcEl = null;
 
 const mouse = {
   x: 0,
   y: 0,
 };
 
-const worldScale = { x: 0.02, y: 0.02, z: 0.1 }; // or LAB
+const worldScale = { x: 0.03, y: 0.03, z: 0.1 }; // or LAB
 const scopeCenter = { x: 0, y: 0, z: 5 }; // for LAB
 // const worldScale = { x: 2.5, y: 2.5, z: 1 }; // for xyY
 // const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 }; // for xyY
@@ -31,10 +33,12 @@ resultEl.height = scopeSize;
 
 const imagePreviewCtx = imagePreviewEl.getContext('2d');
 
+
 const resultCtx = resultEl.getContext('webgl2');
 if (!resultCtx) {
   alert('Your browser does not support WebGL2');
 }
+init(imagePreviewCtx, resultCtx)
 
 resultEl.addEventListener('mousemove', (e) => {
   const rect = resultEl.getBoundingClientRect();
@@ -59,20 +63,30 @@ fileInput.addEventListener('change', async e => {
   fileInput.disabled = false;
 });
 
-async function processNewFile(file, sourceCtx, scopeCtx) {
-  const image = await createImageFromFile(file);
-  renderImagePreviewCanvas(image, sourceCtx, samplingResolution);
-  const previewImageData = sourceCtx.getImageData(0, 0, sourceCtx.width, sourceCtx.height);
-  const points = createScopePoints(previewImageData);
-
+async function init(sourceCtx, scopeCtx) {
   const viewer = new GLScopeViewer(scopeCtx);
-  await viewer.setPoints(points);
+  await viewer.init();
+
+  const updatePoints = () => {
+    const previewImageData = getImageDataFromSrcEl(srcEl, sourceCtx, samplingResolution);
+    const points = createScopePoints(previewImageData);
+    viewer.setPoints(points);
+  };
+  
   const render = () => {
     requestAnimationFrame(render);
     const viewTransform = generateViewTransform(mouse.x, mouse.y, scopeCenter, worldScale, perspectiveStrength);
     viewer.renderScope(viewTransform);
   };
+  updatePoints();
   render();
+  setInterval(updatePoints, 1000 / 20);
+}
+
+async function processNewFile(file) {
+  srcEl = await createElementFromFile(file, 'video');
+  srcEl.loop = true;
+  srcEl.play();
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
