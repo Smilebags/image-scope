@@ -13,32 +13,51 @@ import {
   CIEXYZtoCIExyY,
 } from './colour.js';
 
-export function createElementFromFile(file, element = 'img') {
+export async function createElementFromFile(file) {
+  const fileType = file.type.split('/')[0];
+  return  {
+    el: await (fileType === 'image' ? createImageFromFile(file) : createVideoFromFile(file)),
+    fileType,
+  };
+}
+
+function createVideoFromFile(file) {
   return new Promise((resolve, reject) => {
-    const el = document.createElement(element);
-    // el.onload = () => resolve(el);
-    // el.onerror = () => reject(new Error('Could not load image'));
+    const el = document.createElement('video');
+    el.onloadeddata = () => resolve(el);
+    el.loop = true;
     el.src = URL.createObjectURL(file);
-    resolve(el);
+    el.play();
   });
 }
 
-export function getImageDataFromSrcEl(image, ctx, targetResolution) {
-  if (image && image.videoHeight && image.videoWidth) {
-    const max = Math.max(image.videoWidth, image.videoHeight);
+function createImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const el = document.createElement('img');
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error('Could not load image'));
+    el.src = URL.createObjectURL(file);
+  });
+}
+
+export function getImageDataFromSrcEl(el, ctx, targetResolution) {
+  const height = el?.videoHeight || el?.naturalHeight;
+  const width = el?.videoWidth || el?.naturalWidth;
+  if (el && height && width) {
+    const max = Math.max(width, height);
     const fractionOfMax = {
-      width: image.videoWidth / max,
-      height: image.videoHeight / max,
+      width: width / max,
+      height: height / max,
     };
-  
+
     const elWidth = Math.floor(fractionOfMax.width * targetResolution);
     const elHeight = Math.floor(fractionOfMax.height * targetResolution);
-  
+
     ctx.canvas.width = elWidth;
     ctx.canvas.height = elHeight;
     ctx.width = elWidth;
     ctx.height = elHeight;
-    ctx.drawImage(image, 0, 0, elWidth, elHeight);
+    ctx.drawImage(el, 0, 0, elWidth, elHeight);
   } else {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
