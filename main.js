@@ -1,14 +1,13 @@
 import {
   createElementFromFile,
   getImageDataFromSrcEl,
-  createScopePoints,
   generateViewTransform,
 } from './scope.js';
 import { GLScopeViewer } from './webgl.js';
 
 
 const scopeSize = 1600;
-let samplingResolution = 256;
+let samplingResolution = 512;
 
 let srcEl = null;
 let startPointUpdateLoop = () => {};
@@ -19,10 +18,10 @@ const mouse = {
   y: 0,
 };
 
-const worldScale = { x: 0.03, y: 0.03, z: 0.1 }; // or LAB
-const scopeCenter = { x: 0, y: 0, z: 5 }; // for LAB
-// const worldScale = { x: 2.5, y: 2.5, z: 1 }; // for xyY
-// const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 }; // for xyY
+// const worldScale = { x: 0.03, y: 0.03, z: 0.1 }; // or LAB
+// const scopeCenter = { x: 0, y: 0, z: 5 }; // for LAB
+const worldScale = { x: 2.5, y: 2.5, z: 1 }; // for xyY
+const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 }; // for xyY
 
 const perspectiveStrength = 0.1;
 
@@ -48,8 +47,7 @@ async function init(sourceCtx, scopeCtx) {
 
   const updatePoints = () => {
     const previewImageData = getImageDataFromSrcEl(srcEl, sourceCtx, samplingResolution);
-    const points = createScopePoints(previewImageData);
-    viewer.setPoints(points);
+    viewer.setBufferData(previewImageData.data);
   };
   
   let intervalRef = null;
@@ -110,10 +108,10 @@ async function processNewFile(file) {
   const { el, fileType } = await createElementFromFile(file);
   srcEl = el;
   if (fileType === 'video') {
-    samplingResolution = 256;
+    samplingResolution = 1024;
     startPointUpdateLoop();
   } else {
-    samplingResolution = 1024;
+    samplingResolution = 2048;
     stopPointUpdateLoop();
   }
 }

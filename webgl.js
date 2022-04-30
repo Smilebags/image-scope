@@ -1,34 +1,9 @@
-// const scopeSize = 1024;
-// const samplingResolution = 256;
+import {
+  createScopeOutlinePoints,
+} from './scope.js';
 
-// const worldScale = { x: 0.03, y: 0.03, z: 0.08 };
-// const scopeCenter = { x: 0, y: 0, z: 3 };
-
-// let t = 0;
-// const perspectiveStrength = 0;
-
-
-// const resultEl = document.getElementById('result');
-// resultEl.width = scopeSize;
-// resultEl.height = scopeSize;
-
-// const gl = resultEl.getContext('webgl2');
-// if (!gl) {
-//   alert('Your browser does not support WebGL2');
-// }
-
-
-// const points = [
-//   { x: 0, y: 0, z: 0, r: 1, g: 0, b: 0, a: 1 },
-//   { x: 0, y: 0.5, z: 1, r: 0, g: 1, b: 0, a: 1 },
-//   { x: 0.7, y: 0, z: 1, r: 0, g: 0, b: 1, a: 1 },
-//   { x: 0.6, y: 0, z: 1, r: 0, g: 0, b: 1, a: 0.5 },
-//   { x: 0.5, y: 0, z: 1, r: 0, g: 0, b: 1, a: 0.25 },
-//   { x: 0.4, y: 0, z: 1, r: 0, g: 0, b: 1, a: 0.125 },
-// ];
-
-// glDrawPoints(gl, points);
-
+const boundaryPoints = createScopeOutlinePoints();
+console.log(boundaryPoints);
 export class GLScopeViewer {
   constructor(
     gl,
@@ -56,41 +31,25 @@ export class GLScopeViewer {
     this.program = createProgram(this.gl, vertexShader, fragmentShader);
   }
 
-  setPoints(points) {
+  setBufferData(data) {
     if (!this.program) {
       return;
     }
     if (!this.pointsLength) {
       this.#initPoints();
     }
-    this.pointsLength = points.length;
+    let combinedArray = new Float32Array(data.length + boundaryPoints.length);
+    combinedArray.set(data, 0);
+    combinedArray.set(boundaryPoints, data.length);
+    this.pointsLength = combinedArray.length / 4;
     
-    const positions = mapPointsToPositions(points);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
-    
-    const colors = mapPointsToColors(points);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(colors), this.gl.STATIC_DRAW);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, combinedArray, this.gl.STATIC_DRAW);
   }
 
   #initPoints() {
-    const positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position");
-    
-    this.positionBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-
     const vao = this.gl.createVertexArray();
     this.gl.bindVertexArray(vao);
-    this.gl.enableVertexAttribArray(positionAttributeLocation);
-    this.gl.vertexAttribPointer(
-      positionAttributeLocation,
-      3, // size:  n components per iteration
-      this.gl.FLOAT, // type: the data is 32bit floats
-      false, // normalize: don't normalize the data
-      0, // stride: 0 = move forward size * sizeof(type) each iteration to get the next position
-      0, // offset: start at the beginning of the buffer
-    );
 
     const colorAttributeLocation = this.gl.getAttribLocation(this.program, "a_color");
     this.colorBuffer = this.gl.createBuffer();
@@ -136,15 +95,6 @@ export class GLScopeViewer {
     this.gl.drawArrays(primitiveType, elementOffset, count);
   }
 }
-
-function mapPointsToPositions(points) {
-  return points.flatMap(point => [point.x, point.y, point.z]);
-}
-
-function mapPointsToColors(points) {
-  return points.flatMap(point => [point.r / 255, point.g / 255, point.b / 255, point.a / 255]);
-}
-
 
 function fetchText(path) {
   return fetch(path)

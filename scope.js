@@ -103,7 +103,7 @@ function renderBackground(ctx, scopeSize) {
   ctx.fillRect(0, 0, scopeSize, scopeSize);
 }
 
-function createScopeOutlinePoints() {
+export function createScopeOutlinePoints() {
   const blackRed = generateSegment(
     { r: 0, g: 0, b: 0 },
     { r: 255, g: 0, b: 0 }
@@ -153,10 +153,9 @@ function createScopeOutlinePoints() {
     { r: 255, g: 255, b: 255 }
   );
 
-  const createPoints = segment => segment.map(sample => {
+  const createPoints = segment => segment.flatMap(sample => {
     const { r, g, b } = sample;
-    const { x, y, z } = convertsRGBToxyz({ r, g, b });
-    return { x, y, z, r, g, b, a: 255 };
+    return [r, g, b, 255];
   });
 
   const segments = [
@@ -196,12 +195,6 @@ function convertsRGBToxyz(rgb) {
     y: isNaN(lab.b) ? 0 : lab.b,
     z: isNaN(lab.L) ? 0 : lab.L,
   };
-  // const xyY = CIEXYZtoCIExyY(XYZ);
-  // return {
-  //   x: isNaN(xyY.x) ? 0 : xyY.x,
-  //   y: isNaN(xyY.y) ? 0 : xyY.y,
-  //   z: isNaN(xyY.Y) ? 0 : xyY.Y,
-  // };
 }
 
 function applyViewTransform(point, viewTransform) {
