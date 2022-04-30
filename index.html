@@ -7,16 +7,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="./main.js" type="module"></script>
   <style>
-    canvas {
-      max-width: 50%;
+    * {
+      padding: 0;
+      margin: 0;
+    }
+    .container {
+      display: grid;
+      gap: 8px;
+      padding: 8px;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 4fr);
+    }
+    /* canvas {
+      width: auto;
+      height: auto;
+    } */
+    #result, #preview {
+      width: 100%;
+      height: auto;
     }
   </style>
 </head>
 
 <body>
   <input type="file" id="file-input" /><br />
-  <canvas id="image-preview"></canvas>
-  <canvas id="result"></canvas>
+  <div class="container">
+    <canvas id="preview"></canvas>
+    <canvas id="result"></canvas>
+  </div>
 </body>
 
 </html>

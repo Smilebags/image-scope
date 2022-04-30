@@ -5,8 +5,7 @@ import {
 } from './scope.js';
 import { GLScopeViewer } from './webgl.js';
 
-
-const scopeSize = 1600;
+const scopeSize = 2000;
 let samplingResolution = 512;
 
 let srcEl = null;
@@ -23,14 +22,16 @@ const mouse = {
 const worldScale = { x: 2.5, y: 2.5, z: 1 }; // for xyY
 const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 }; // for xyY
 
-const perspectiveStrength = 0.1;
+let perspectiveStrength = 1;
 
 const fileInput = document.getElementById('file-input');
-const imagePreviewEl = document.getElementById('image-preview');
-
+const imagePreviewEl = document.getElementById('preview');
 const resultEl = document.getElementById('result');
+
 resultEl.width = scopeSize;
 resultEl.height = scopeSize;
+// resultEl.style.width = `${scopeSize}px`;
+// resultEl.style.height = `${scopeSize}px`;
 
 const imagePreviewCtx = imagePreviewEl.getContext('2d');
 const resultCtx = resultEl.getContext('webgl2');
@@ -39,7 +40,6 @@ if (!resultCtx) {
   alert('Your browser does not support WebGL2');
 }
 init(imagePreviewCtx, resultCtx)
-
 
 async function init(sourceCtx, scopeCtx) {
   const viewer = new GLScopeViewer(scopeCtx);
@@ -53,7 +53,7 @@ async function init(sourceCtx, scopeCtx) {
   let intervalRef = null;
   startPointUpdateLoop = () => {
     if (!intervalRef) {
-      intervalRef = setInterval(updatePoints, 1000 / 10);
+      intervalRef = setInterval(updatePoints, 1000 / 25);
       updatePoints();
     }
   };
@@ -73,10 +73,6 @@ async function init(sourceCtx, scopeCtx) {
   render();
   startPointUpdateLoop();
 
-
-
-
-
   resultEl.addEventListener('mousemove', (e) => {
     const rect = resultEl.getBoundingClientRect();
     mouse.x = ((e.clientX - rect.left) / rect.width);
@@ -92,7 +88,6 @@ async function init(sourceCtx, scopeCtx) {
     return false;
   });
   
-  
   fileInput.addEventListener('change', async e => {
     fileInput.disabled = true;
     const file = e.target.files[0];
@@ -100,8 +95,17 @@ async function init(sourceCtx, scopeCtx) {
     fileInput.disabled = false;
   });
 
-
-
+  // listen to z and x and increment perspectiveStrength
+  const perspectiveIncrement = 0.25;
+  document.addEventListener('keydown', e => {
+    console.log('keydown', e);
+    if (e.key === 'z') {
+      perspectiveStrength += perspectiveIncrement;
+    } else if (e.key === 'x') {
+      perspectiveStrength -= perspectiveIncrement;
+    }
+    console.log(perspectiveStrength);
+  });
 }
 
 async function processNewFile(file) {

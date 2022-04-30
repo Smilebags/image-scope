@@ -175,7 +175,7 @@ export function createScopeOutlinePoints() {
   return segments.flatMap(createPoints);
 }
 
-function generateSegment(startRGB, endRGB, count = 255) {
+function generateSegment(startRGB, endRGB, count = 512) {
   const segment = [];
   for (let i = 0; i < count; i++) {
     const mix = i / count;
@@ -207,11 +207,11 @@ function applyViewTransform(point, viewTransform) {
   };
 }
 
-export function generateViewTransform(x, y, scopeCenter, worldScale, perspectiveStrength = 1) {
+export function generateViewTransform(x, y, scopeCenter, worldScale, perspectiveStrength) {
   const cameraTransform = [
     1, 0, 0, 0,
     0, 1, 0, 0,
-    0, 0, -perspectiveStrength, 1,
+    0, 0, -0.1, perspectiveStrength,
     0, 0, 0, 1,
   ];
   const worldTranslateTransform = [

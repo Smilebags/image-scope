@@ -3,7 +3,6 @@ import {
 } from './scope.js';
 
 const boundaryPoints = createScopeOutlinePoints();
-console.log(boundaryPoints);
 export class GLScopeViewer {
   constructor(
     gl,
@@ -91,7 +90,7 @@ export class GLScopeViewer {
     const elementOffset = 0;
     const count = this.pointsLength;
 
-    resizeCanvasToDisplaySize(this.gl.canvas) // use per frame so the this.gl size matches canvas element size
+    // resizeCanvasToDisplaySize(this.gl.canvas) // use per frame so the this.gl size matches canvas element size
     this.gl.drawArrays(primitiveType, elementOffset, count);
   }
 }
@@ -126,22 +125,4 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
   console.log(gl.getProgramInfoLog(program));
   gl.deleteProgram(program);
-}
-
-function resizeCanvasToDisplaySize(canvas) {
-  const dpr = window.devicePixelRatio;
-  const displayWidth = canvas.clientWidth * dpr;
-  const displayHeight = canvas.clientHeight * dpr;
-
-  // Check if the canvas is not the same size.
-  const needResize = canvas.width !== displayWidth ||
-    canvas.height !== displayHeight;
-
-  if (needResize) {
-    // Make the canvas the same size
-    canvas.width = displayWidth;
-    canvas.height = displayHeight;
-  }
-
-  return needResize;
 }
