@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "Image Scope",
+  "version": "1.0",
+  "description": "Shows a 3D representation of the pixels in an image or video",
+  "icons": {
+    "48": "icons/border-48.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "dist/bundle.js"
+      ]
+    }
+  ]
+}

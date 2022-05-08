@@ -10,12 +10,11 @@ import {
   sRGBToLinearsRGB,
   linearsRGBToCIEXYZ,
   CIEXYZtoCIELAB,
-  CIEXYZtoCIExyY,
 } from './colour.js';
 
 export async function createElementFromFile(file) {
   const fileType = file.type.split('/')[0];
-  return  {
+  return {
     el: await (fileType === 'image' ? createImageFromFile(file) : createVideoFromFile(file)),
     fileType,
   };

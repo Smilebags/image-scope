@@ -36,6 +36,7 @@ void main()
 {
   vec4 c = a_color;
   c = c * vec4(1.0 / 255.0);
+  c.rgb *= c.a;
   c.rgb = sRGBToRec709(c.rgb);
 
   vec4 a_position = vec4(CIEXYZtoCIExyY(rec709ToCIEXYZ(c.rgb)), c.a);
@@ -49,5 +50,5 @@ void main()
   gl_Position.z = 0.0 - gl_Position.z;
   gl_Position.z = gl_Position.z / (gl_Position.z + 1.0);
   gl_Position.x = -gl_Position.x;
-  gl_PointSize = 3.0;
+  gl_PointSize = 2.0;
 }

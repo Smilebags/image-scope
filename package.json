@@ -1,0 +1,23 @@
+{
+  "name": "image-scope",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "build": "npm run shader:copy && npx esbuild src/main.js --bundle --outfile=dist/bundle.js",
+    "build:watch": "npm run shader:copy && npx esbuild src/main.js --bundle --outfile=dist/bundle.js --watch",
+    "shader:copy": "cp -r src/points.frag dist/points.frag && cp -r src/points.vert dist/points.vert",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Smilebags/image-scope.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Smilebags/image-scope/issues"
+  },
+  "homepage": "https://github.com/Smilebags/image-scope#readme",
+  "devDependencies": {
+    "esbuild": "^0.14.38"
+  }
+}

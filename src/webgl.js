@@ -2,6 +2,8 @@ import {
   createScopeOutlinePoints,
 } from './scope.js';
 
+const getExtensionUrl = path => browser.runtime.getURL(`dist/${path}`);
+
 const boundaryPoints = createScopeOutlinePoints();
 export class GLScopeViewer {
   constructor(
@@ -23,13 +25,10 @@ export class GLScopeViewer {
   async #initShader() {
     const vertexShaderSource = await fetchText('./points.vert');
     const fragmentShaderSource = await fetchText('./points.frag');
-
-    const vertexShader = createShader(this.gl, this.gl.VERTEX_SHADER, vertexShaderSource);
-    const fragmentShader = createShader(this.gl, this.gl.FRAGMENT_SHADER, fragmentShaderSource);
-
-    this.program = createProgram(this.gl, vertexShader, fragmentShader);
+    this.program = createProgram(this.gl, vertexShaderSource, fragmentShaderSource);
   }
 
+  // TODO: Replace this with (source, width, height)
   setBufferData(data) {
     if (!this.program) {
       return;
@@ -41,7 +40,7 @@ export class GLScopeViewer {
     combinedArray.set(data, 0);
     combinedArray.set(boundaryPoints, data.length);
     this.pointsLength = combinedArray.length / 4;
-    
+
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, combinedArray, this.gl.STATIC_DRAW);
   }
@@ -53,7 +52,7 @@ export class GLScopeViewer {
     const colorAttributeLocation = this.gl.getAttribLocation(this.program, "a_color");
     this.colorBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
-  
+
     this.gl.enableVertexAttribArray(colorAttributeLocation);
     this.gl.vertexAttribPointer(
       colorAttributeLocation,
@@ -73,7 +72,7 @@ export class GLScopeViewer {
       return;
     }
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
-    this.gl.clearColor(0, 0, 0, 1);
+    this.gl.clearColor(0, 0, 0, 0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
     this.gl.clearDepth(1);
@@ -90,13 +89,12 @@ export class GLScopeViewer {
     const elementOffset = 0;
     const count = this.pointsLength;
 
-    // resizeCanvasToDisplaySize(this.gl.canvas) // use per frame so the this.gl size matches canvas element size
     this.gl.drawArrays(primitiveType, elementOffset, count);
   }
 }
 
 function fetchText(path) {
-  return fetch(path)
+  return fetch(getExtensionUrl(path))
     .then(response => response.text());
 }
 
@@ -113,7 +111,9 @@ function createShader(gl, type, source) {
   gl.deleteShader(shader);
 }
 
-function createProgram(gl, vertexShader, fragmentShader) {
+function createProgram(gl, vertexSource, fragmentSource) {
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
   const program = gl.createProgram();
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);

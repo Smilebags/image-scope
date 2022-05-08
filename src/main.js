@@ -5,12 +5,26 @@ import {
 } from './scope.js';
 import { GLScopeViewer } from './webgl.js';
 
-const scopeSize = 2000;
+console.log('starting extension');
+
+const scopeSize = 512;
 let samplingResolution = 512;
 
+let elementIndex = 0;
 let srcEl = null;
-let startPointUpdateLoop = () => {};
-let stopPointUpdateLoop = () => {};
+makeActiveElement(document.querySelectorAll('img, video')[elementIndex]);
+if (!srcEl) {
+  console.log('no source element, exiting');
+  throw new Error('Exit');
+};
+console.log(srcEl);
+let startPointUpdateLoop = () => { };
+let stopPointUpdateLoop = () => { };
+
+const rotation = {
+  x: 0,
+  y: 0,
+};
 
 const mouse = {
   x: 0,
@@ -24,14 +38,18 @@ const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 }; // for xyY
 
 let perspectiveStrength = 1;
 
-const fileInput = document.getElementById('file-input');
-const imagePreviewEl = document.getElementById('preview');
-const resultEl = document.getElementById('result');
+const imagePreviewEl = document.createElement('canvas');
+imagePreviewEl.originClean = false;
+const resultEl = document.createElement('canvas');
+resultEl.style.width = '512px';
+resultEl.style.position = 'fixed';
+resultEl.style.top = '0';
+resultEl.style.left = '0';
+resultEl.style.zIndex = '1000000';
+document.body.appendChild(resultEl);
 
 resultEl.width = scopeSize;
 resultEl.height = scopeSize;
-// resultEl.style.width = `${scopeSize}px`;
-// resultEl.style.height = `${scopeSize}px`;
 
 const imagePreviewCtx = imagePreviewEl.getContext('2d');
 const resultCtx = resultEl.getContext('webgl2');
@@ -49,7 +67,7 @@ async function init(sourceCtx, scopeCtx) {
     const previewImageData = getImageDataFromSrcEl(srcEl, sourceCtx, samplingResolution);
     viewer.setBufferData(previewImageData.data);
   };
-  
+
   let intervalRef = null;
   startPointUpdateLoop = () => {
     if (!intervalRef) {
@@ -64,21 +82,34 @@ async function init(sourceCtx, scopeCtx) {
     }
     updatePoints();
   };
-  
+
   const render = () => {
     requestAnimationFrame(render);
-    const viewTransform = generateViewTransform(mouse.x, mouse.y, scopeCenter, worldScale, perspectiveStrength);
+    const viewTransform = generateViewTransform(rotation.x, rotation.y, scopeCenter, worldScale, perspectiveStrength);
     viewer.renderScope(viewTransform);
   };
   render();
   startPointUpdateLoop();
 
-  resultEl.addEventListener('mousemove', (e) => {
-    const rect = resultEl.getBoundingClientRect();
-    mouse.x = ((e.clientX - rect.left) / rect.width);
-    mouse.y = (e.clientY - rect.top) / rect.height;
-  });
-  
+  const onMouseDown = (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    const onMouseMove = (e) => {
+      const relativeX = e.clientX - mouse.x;
+      const relativeY = e.clientY - mouse.y;
+      rotation.x += 0.001 * relativeX;
+      rotation.y += 0.001 * relativeY;
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+    }
+    window.addEventListener('mouseup', onMouseUp, { once: true });
+  };
+  resultEl.addEventListener('mousedown', onMouseDown);
+
   resultEl.addEventListener('wheel', e => {
     e.preventDefault();
     const scale = -e.deltaY / 1000;
@@ -87,24 +118,20 @@ async function init(sourceCtx, scopeCtx) {
     worldScale.z *= 1.0 + scale;
     return false;
   });
-  
-  fileInput.addEventListener('change', async e => {
-    fileInput.disabled = true;
-    const file = e.target.files[0];
-    await processNewFile(file, imagePreviewCtx, resultCtx);
-    fileInput.disabled = false;
-  });
 
-  // listen to z and x and increment perspectiveStrength
   const perspectiveIncrement = 0.25;
   document.addEventListener('keydown', e => {
-    console.log('keydown', e);
     if (e.key === 'z') {
       perspectiveStrength += perspectiveIncrement;
     } else if (e.key === 'x') {
       perspectiveStrength -= perspectiveIncrement;
+    } else if (e.key === 'v') {
+      elementIndex += 1;
+      makeActiveElement(document.querySelectorAll('img, video')[elementIndex]);
+    } else if (e.key === 'c') {
+      elementIndex = Math.max(0, elementIndex - 1);
+      makeActiveElement(document.querySelectorAll('img, video')[elementIndex]);
     }
-    console.log(perspectiveStrength);
   });
 }
 
@@ -118,4 +145,11 @@ async function processNewFile(file) {
     samplingResolution = 2048;
     stopPointUpdateLoop();
   }
+}
+
+function makeActiveElement(el) {
+  srcEl && (srcEl.style.outline = 'none');
+  el.crossOrigin = 'anonymous';
+  el.style.outline = '2px solid red';
+  srcEl = el;
 }
