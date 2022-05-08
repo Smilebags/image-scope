@@ -12,32 +12,32 @@ import {
   CIEXYZtoCIELAB,
 } from './colour.js';
 
-export async function createElementFromFile(file) {
-  const fileType = file.type.split('/')[0];
-  return {
-    el: await (fileType === 'image' ? createImageFromFile(file) : createVideoFromFile(file)),
-    fileType,
-  };
-}
+// export async function createElementFromFile(file) {
+//   const fileType = file.type.split('/')[0];
+//   return {
+//     el: await (fileType === 'image' ? createImageFromFile(file) : createVideoFromFile(file)),
+//     fileType,
+//   };
+// }
 
-function createVideoFromFile(file) {
-  return new Promise((resolve, reject) => {
-    const el = document.createElement('video');
-    el.onloadeddata = () => resolve(el);
-    el.loop = true;
-    el.src = URL.createObjectURL(file);
-    el.play();
-  });
-}
+// function createVideoFromFile(file) {
+//   return new Promise((resolve, reject) => {
+//     const el = document.createElement('video');
+//     el.onloadeddata = () => resolve(el);
+//     el.loop = true;
+//     el.src = URL.createObjectURL(file);
+//     el.play();
+//   });
+// }
 
-function createImageFromFile(file) {
-  return new Promise((resolve, reject) => {
-    const el = document.createElement('img');
-    el.onload = () => resolve(el);
-    el.onerror = () => reject(new Error('Could not load image'));
-    el.src = URL.createObjectURL(file);
-  });
-}
+// function createImageFromFile(file) {
+//   return new Promise((resolve, reject) => {
+//     const el = document.createElement('img');
+//     el.onload = () => resolve(el);
+//     el.onerror = () => reject(new Error('Could not load image'));
+//     el.src = URL.createObjectURL(file);
+//   });
+// }
 
 export function getImageDataFromSrcEl(el, ctx, targetResolution) {
   const height = el?.videoHeight || el?.naturalHeight;

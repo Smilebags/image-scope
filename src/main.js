@@ -1,11 +1,9 @@
+import { wrap, clamp } from './util';
 import {
-  createElementFromFile,
   getImageDataFromSrcEl,
   generateViewTransform,
 } from './scope.js';
 import { GLScopeViewer } from './webgl.js';
-
-console.log('starting extension');
 
 const scopeSize = 512;
 let samplingResolution = 512;
@@ -17,13 +15,12 @@ if (!srcEl) {
   console.log('no source element, exiting');
   throw new Error('Exit');
 };
-console.log(srcEl);
 let startPointUpdateLoop = () => { };
 let stopPointUpdateLoop = () => { };
 
 const rotation = {
-  x: 0,
-  y: 0,
+  x: 0.5,
+  y: 1,
 };
 
 const mouse = {
@@ -31,12 +28,10 @@ const mouse = {
   y: 0,
 };
 
-// const worldScale = { x: 0.03, y: 0.03, z: 0.1 }; // or LAB
-// const scopeCenter = { x: 0, y: 0, z: 5 }; // for LAB
-const worldScale = { x: 2.5, y: 2.5, z: 1 }; // for xyY
-const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 }; // for xyY
+const worldScale = { x: 2.5, y: 2.5, z: 1 };
+const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 };
 
-let perspectiveStrength = 1;
+let perspectiveStrength = 0;
 
 const imagePreviewEl = document.createElement('canvas');
 imagePreviewEl.originClean = false;
@@ -48,8 +43,9 @@ resultEl.style.left = '0';
 resultEl.style.zIndex = '1000000';
 document.body.appendChild(resultEl);
 
-resultEl.width = scopeSize;
-resultEl.height = scopeSize;
+const dpr = window.devicePixelRatio;
+resultEl.width = scopeSize * dpr;
+resultEl.height = scopeSize * dpr;
 
 const imagePreviewCtx = imagePreviewEl.getContext('2d');
 const resultCtx = resultEl.getContext('webgl2');
@@ -99,6 +95,8 @@ async function init(sourceCtx, scopeCtx) {
       const relativeY = e.clientY - mouse.y;
       rotation.x += 0.001 * relativeX;
       rotation.y += 0.001 * relativeY;
+      rotation.x = wrap(rotation.x, 0, 1);
+      rotation.y = clamp(rotation.y, 0, 1);
       mouse.x = e.clientX;
       mouse.y = e.clientY;
     };
@@ -133,18 +131,6 @@ async function init(sourceCtx, scopeCtx) {
       makeActiveElement(document.querySelectorAll('img, video')[elementIndex]);
     }
   });
-}
-
-async function processNewFile(file) {
-  const { el, fileType } = await createElementFromFile(file);
-  srcEl = el;
-  if (fileType === 'video') {
-    samplingResolution = 1024;
-    startPointUpdateLoop();
-  } else {
-    samplingResolution = 2048;
-    stopPointUpdateLoop();
-  }
 }
 
 function makeActiveElement(el) {
