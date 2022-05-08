@@ -103,7 +103,11 @@ const dpr = window.devicePixelRatio;
 resultEl.width = scopeSize * dpr;
 resultEl.height = scopeSize * dpr;
 
-const imagePreviewCtx = imagePreviewEl.getContext('2d');
+const imagePreviewCtx = imagePreviewEl.getContext('2d', { colorSpace: 'display-p3' });
+const imageData = imagePreviewCtx.getImageData(0, 0, 1, 1);
+
+const useP3 = imageData.colorSpace === 'display-p3';
+
 const resultCtx = resultEl.getContext('webgl2');
 
 if (!resultCtx) {
@@ -112,7 +116,7 @@ if (!resultCtx) {
 init(imagePreviewCtx, resultCtx)
 
 async function init(sourceCtx, scopeCtx) {
-  const viewer = new GLScopeViewer(scopeCtx);
+  const viewer = new GLScopeViewer(scopeCtx, useP3);
   await viewer.init();
 
   const updatePoints = () => {

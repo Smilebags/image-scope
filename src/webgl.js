@@ -8,6 +8,7 @@ const boundaryPoints = createScopeOutlinePoints();
 export class GLScopeViewer {
   constructor(
     gl,
+    useP3 = false,
   ) {
     this.gl = gl;
     this.gl.enable(this.gl.BLEND);
@@ -26,6 +27,15 @@ export class GLScopeViewer {
     const vertexShaderSource = await fetchText('./points.vert');
     const fragmentShaderSource = await fetchText('./points.frag');
     this.program = createProgram(this.gl, vertexShaderSource, fragmentShaderSource);
+    
+    this.gl.useProgram(this.program);
+    
+    const resolutionUniformLocation = this.gl.getUniformLocation(this.program, "u_resolution");
+    this.gl.uniform2f(resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height);
+
+    const useP3UniformLocation = this.gl.getUniformLocation(this.program, "u_use_p3");
+    console.log('useP3', this.useP3);
+    this.gl.uniform1i(useP3UniformLocation, this.useP3 ? 1 : 0);
   }
 
   // TODO: Replace this with (source, width, height)
@@ -63,7 +73,6 @@ export class GLScopeViewer {
       0, // offset: start at the beginning of the buffer
     );
 
-    this.gl.useProgram(this.program);
     this.gl.bindVertexArray(vao);
   }
 
@@ -78,12 +87,9 @@ export class GLScopeViewer {
     this.gl.clearDepth(1);
     this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
 
-    const resolutionUniformLocation = this.gl.getUniformLocation(this.program, "u_resolution");
-    this.gl.uniform2f(resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height);
     // 4x4 matrix
     const viewTransformUniformLocation = this.gl.getUniformLocation(this.program, "u_view_transform");
     this.gl.uniformMatrix4fv(viewTransformUniformLocation, false, viewTransform);
-
 
     const primitiveType = this.gl.POINTS;
     const elementOffset = 0;
