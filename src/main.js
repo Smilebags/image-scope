@@ -28,20 +28,76 @@ const mouse = {
   y: 0,
 };
 
-const worldScale = { x: 2.5, y: 2.5, z: 1 };
+const draggerState = {
+  downMousePos: {
+    x: 0,
+    y: 0,
+  },
+  downElPos: {
+    x: 0,
+    y: 0,
+  },
+};
+
+const worldScale = { x: 3, y: 3, z: 1 };
 const scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 };
 
 let perspectiveStrength = 0;
 
-const imagePreviewEl = document.createElement('canvas');
+const containerEl = html`<div style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: ${scopeSize}px;
+    height: ${scopeSize}px;
+    z-index: 1000000;
+    background-color: #00000022;
+"></div>`;
+
+const imagePreviewEl = html`<canvas></canvas>`;
 imagePreviewEl.originClean = false;
-const resultEl = document.createElement('canvas');
-resultEl.style.width = '512px';
-resultEl.style.position = 'fixed';
-resultEl.style.top = '0';
-resultEl.style.left = '0';
-resultEl.style.zIndex = '1000000';
-document.body.appendChild(resultEl);
+const resultEl = html`<canvas style="width: 100%; height: 100%;"></canvas>`;
+containerEl.appendChild(resultEl);
+
+const draggerEl = html`<div style="
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  background-color: #ff0000;
+"></div>`;
+containerEl.appendChild(draggerEl);
+
+draggerEl.addEventListener('mousedown', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  const { clientX, clientY } = e;
+  draggerState.downMousePos = { x: clientX, y: clientY };
+  draggerState.downElPos = { x: containerEl.offsetLeft, y: containerEl.offsetTop };
+  const onMouseMove = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const { clientX, clientY } = e;
+    const { downMousePos, downElPos } = draggerState;
+    const deltaX = clientX - downMousePos.x;
+    const deltaY = clientY - downMousePos.y;
+    containerEl.style.left = `${downElPos.x + deltaX}px`;
+    containerEl.style.top = `${downElPos.y + deltaY}px`;
+  };
+  const onMouseUp = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    document.removeEventListener('mousemove', onMouseMove);
+  };
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp, { once: true });
+});
+
+
+document.body.appendChild(containerEl);
+
+
 
 const dpr = window.devicePixelRatio;
 resultEl.width = scopeSize * dpr;
@@ -138,4 +194,10 @@ function makeActiveElement(el) {
   el.crossOrigin = 'anonymous';
   el.style.outline = '2px solid red';
   srcEl = el;
+}
+
+function html(strings, ...keys) {
+  const htmlString = strings.map((str, index) => `${str}${keys[index] || ''}`.trim()).join('').trim();
+  const doc = new DOMParser().parseFromString(htmlString, "text/html");
+  return doc.children[0].children[1].children[0];
 }
