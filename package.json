@@ -4,12 +4,8 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "build": "npm run shader:copy && npx esbuild src/main.js --bundle --outfile=dist/bundle.js",
-    "build:chrome": "npm run manifest:chrome:copy && npm run shader:copy && node esbuild.js chrome",
-    "build:watch": "npm run shader:copy && npx esbuild src/main.js --bundle --outfile=dist/bundle.js --watch",
-    "manifest:chrome:copy": "cp src/chrome-manifest.json dist-chrome/manifest.json",
-    "shader:copy": "cp -r src/points.frag dist/points.frag && cp -r src/points.vert dist/points.vert",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:chrome": "node tools/build.js chrome",
+    "build:firefox": "node tools/build.js firefox"
   },
   "repository": {
     "type": "git",

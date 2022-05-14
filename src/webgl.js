@@ -3,13 +3,13 @@ import {
   createScopeOutlinePoints,
 } from './scope.js';
 
-const getExtensionUrl = path => {
+const getExtensionUrl = (path) => {
   if (env.extension === 'chrome') {
-    const extPath = chrome.runtime.getURL(path);
-    console.log(extPath);
-    return extPath;
+    return chrome.runtime.getURL(path);
+  } else if (env.extension === 'firefox') {
+    return browser.runtime.getURL(path);
   }
-  return browser.runtime.getURL(`dist/${path}`)
+  else return path;
 };
 
 const boundaryPoints = createScopeOutlinePoints();
