@@ -1,0 +1,22 @@
+{
+  "name": "Image Scope",
+  "description": "Shows a 3d plot of the xyY coordinates of the colours in an image on the page",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": ["activeTab", "scripting"],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "points.vert",
+        "points.frag"
+      ],
+      "matches": ["*://*/*"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["bundle.js"]
+    }
+  ]
+}

@@ -1,8 +1,16 @@
+import { env } from './env.js';
 import {
   createScopeOutlinePoints,
 } from './scope.js';
 
-const getExtensionUrl = path => browser.runtime.getURL(`dist/${path}`);
+const getExtensionUrl = path => {
+  if (env.extension === 'chrome') {
+    const extPath = chrome.runtime.getURL(path);
+    console.log(extPath);
+    return extPath;
+  }
+  return browser.runtime.getURL(`dist/${path}`)
+};
 
 const boundaryPoints = createScopeOutlinePoints();
 export class GLScopeViewer {
@@ -25,8 +33,8 @@ export class GLScopeViewer {
   }
 
   async #initShader() {
-    const vertexShaderSource = await fetchText('./points.vert');
-    const fragmentShaderSource = await fetchText('./points.frag');
+    const vertexShaderSource = await fetchText('points.vert');
+    const fragmentShaderSource = await fetchText('points.frag');
     this.program = createProgram(this.gl, vertexShaderSource, fragmentShaderSource);
     
     this.gl.useProgram(this.program);
