@@ -10,6 +10,7 @@ export class GLScopeViewer {
     gl,
     useP3 = false,
   ) {
+    this.useP3 = useP3;
     this.gl = gl;
     this.gl.enable(this.gl.BLEND);
     this.gl.enable(this.gl.DEPTH_TEST);
