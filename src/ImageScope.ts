@@ -4,8 +4,12 @@ import {
   generateViewTransform
 } from './scope.js';
 import { GLScopeViewer } from './webgl.js';
-import { html } from './main';
 
+function html<T extends Element>(strings, ...keys) {
+  const htmlString = strings.map((str, index) => `${str}${keys[index] || ''}`.trim()).join('').trim();
+  const doc = new DOMParser().parseFromString(htmlString, "text/html");
+  return doc.children[0].children[1].children[0] as T;
+}
 export class ImageScope {
   private srcEl?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement;
 
