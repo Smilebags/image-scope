@@ -46,6 +46,7 @@ export class ImageScope {
   private dpr = window.devicePixelRatio;
 
   private resultEl: HTMLCanvasElement;
+  private draggerEl: HTMLElement;
   private containerEl: HTMLDivElement;
   private imagePreviewEl: HTMLCanvasElement;
 
@@ -59,16 +60,37 @@ export class ImageScope {
     this.resultEl = this.createResultEl();
     this.imagePreviewEl = html`<canvas></canvas>`;
 
-    const draggerEl = this.createDraggerEl();
-    const closeEl = this.createCloseEl();
+    this.draggerEl = this.createDraggerEl();
+    const closeEl = this.createButtonEl(
+      '#ff3322',
+      () => this.hide(),
+      'X',
+      'Close scope',
+    );
+    const prevEl = this.createButtonEl(
+      '#aaa',
+      () => this.prevElement(),
+      '<',
+      'Previous element',
+    );
+    const nextEl = this.createButtonEl(
+      '#aaa',
+      () => this.nextElement(),
+      '>',
+      'Next element',
+    );
 
-    this.containerEl.appendChild(draggerEl);
-    this.containerEl.appendChild(closeEl);
+    const buttonContainer = this.createButtonContainerEl();
+
+    buttonContainer.appendChild(this.draggerEl);
+    buttonContainer.appendChild(prevEl);
+    buttonContainer.appendChild(nextEl);
+    buttonContainer.appendChild(closeEl);
+
     this.containerEl.appendChild(this.resultEl);
+    this.containerEl.appendChild(buttonContainer);
 
-    document.addEventListener('keydown', this.onScopeKeydown);
-
-    this.setActiveElement(document.querySelectorAll('img, video')[this.elementIndex] as any);
+    this.setActiveElement(this.findActiveElement());
   }
 
   show() {
@@ -90,6 +112,20 @@ export class ImageScope {
     el.crossOrigin = 'anonymous';
     this.srcEl = el;
     this.showSrcElBorder();
+  }
+
+  private nextElement() {
+    this.elementIndex++;
+    this.setActiveElement(this.findActiveElement());
+  }
+
+  private prevElement() {
+    this.elementIndex = Math.max(0, this.elementIndex - 1);
+    this.setActiveElement(this.findActiveElement());
+  }
+
+  private findActiveElement(): HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | undefined {
+    return document.querySelectorAll('img, video, canvas')[this.elementIndex] as any;
   }
 
   async init() {
@@ -140,41 +176,64 @@ export class ImageScope {
         width: ${this.scopeSize}px;
         height: ${this.scopeSize}px;
         z-index: 1000000;
-        background-color: #00000022;
+        background-color: #00000044;
+        overflow: hidden;
+        border: 1px solid #000000A0;
+        border-radius: 4px;
       "></div>
     `;
-  }
-
-  private createCloseEl() {
-    const closeEl = html`<div style="
-      position: absolute;
-      top: 0;
-      left: 16px;
-      width: 16px;
-      height: 16px;
-      background-color: #ff0000;
-      "></div>
-    `;
-
-    // TODO: Handle leak 
-    closeEl.addEventListener('click', () => this.hide());
-    return closeEl;
   }
 
   private createDraggerEl() {
-    const draggerEl = html`<div style="
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 16px;
-      height: 16px;
-      background-color: #0000ff;
-      "></div>
+    const draggerEl: HTMLButtonElement = html`<button style="
+      width: 24px;
+      height: 24px;
+      background-color: #88aaff;
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: grab;
+      border-radius: 4px;
+      " title="Move window">✥</button>
     `;
 
     // TODO: Handle leak 
     draggerEl.addEventListener('mousedown', (e: any) => this.onDraggerMouseDown(e));
     return draggerEl;
+  }
+
+  private createButtonContainerEl() {
+    return html`<div style="
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      height: 24px;
+      display: flex;
+      flex-direction: row;
+      border-radius: 4px;
+      gap: 4px;
+    "></div>`;
+  }
+
+  private createButtonEl(
+    color: string,
+    callback: () => void,
+    label = '',
+    tooltip = ''
+    ): HTMLDivElement {
+    const buttonEl: HTMLDivElement = html`<button style="
+      width: 24px;
+      height: 24px;
+      background-color: ${color};
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      " title="${tooltip}">${label}</button>
+    `;
+    buttonEl.addEventListener('click', callback);
+    return buttonEl;
   }
 
   private createWebGLContext() {
@@ -197,6 +256,7 @@ export class ImageScope {
   private onDraggerMouseDown(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    this.draggerEl.style.cursor = 'grabbing';
     const { clientX, clientY } = e;
     this.draggerState.downMousePos = { x: clientX, y: clientY };
     this.draggerState.downElPos = { x: this.containerEl.offsetLeft, y: this.containerEl.offsetTop };
@@ -219,6 +279,7 @@ export class ImageScope {
   private onDraggerMouseUp = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    this.draggerEl.style.cursor = 'grab';
     document.removeEventListener('mousemove', this.onDraggerMouseMove);
   };
 
@@ -229,22 +290,6 @@ export class ImageScope {
     this.worldScale.y *= 1.0 + scale;
     this.worldScale.z *= 1.0 + scale;
     return false;
-  };
-
-  private onScopeKeydown = (e: KeyboardEvent) => {
-    const perspectiveIncrement = 0.25;
-
-    if (e.key === 'z') {
-      this.perspectiveStrength += perspectiveIncrement;
-    } else if (e.key === 'x') {
-      this.perspectiveStrength -= perspectiveIncrement;
-    } else if (e.key === 'v') {
-      this.elementIndex += 1;
-      this.setActiveElement(document.querySelectorAll('img, video')[this.elementIndex] as any);
-    } else if (e.key === 'c') {
-      this.elementIndex = Math.max(0, this.elementIndex - 1);
-      this.setActiveElement(document.querySelectorAll('img, video')[this.elementIndex] as any);
-    }
   };
 
   private onScopeMouseDown = (e: MouseEvent) => {
