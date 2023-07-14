@@ -1,0 +1,21 @@
+{
+  "name": "image-scope",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "build:chrome": "node tools/build.js chrome",
+    "build:firefox": "node tools/build.js firefox"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Smilebags/image-scope.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Smilebags/image-scope/issues"
+  },
+  "homepage": "https://github.com/Smilebags/image-scope#readme",
+  "devDependencies": {
+    "esbuild": "^0.14.38"
+  }
+}
