@@ -5,6 +5,8 @@ import {
 } from './scope.js';
 import { GLScopeViewer } from './webgl.js';
 
+const FORCE_SRGB = true;
+
 function html<T extends Element>(strings, ...keys) {
   const htmlString = strings.map((str, index) => `${str}${keys[index] || ''}`.trim()).join('').trim();
   const doc = new DOMParser().parseFromString(htmlString, "text/html");
@@ -246,7 +248,10 @@ export class ImageScope {
   }
 
   private createSourceCtx() {
-    const ctx = this.imagePreviewEl.getContext('2d', { colorSpace: 'display-p3' });
+    if (FORCE_SRGB) {
+      return this.imagePreviewEl.getContext('2d', { colorSpace: 'srgb', willReadFrequently: true })!;
+    }
+    const ctx = this.imagePreviewEl.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })!;
     const imageData = ctx.getImageData(0, 0, 1, 1);
     // @ts-ignore
     this.useP3 = imageData.colorSpace === 'display-p3';

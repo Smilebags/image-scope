@@ -4,6 +4,15 @@ in vec4 a_color;
 
 uniform mat4 u_view_transform;
 uniform int u_use_p3;
+/**
+u_position_colorspace {
+   0: xyY
+   1: XYZ
+   2: sRGB
+
+}
+*/
+// uniform int u_position_colorspace;
 
 out vec4 v_color;
 
@@ -15,8 +24,12 @@ vec3 diplayP3ToDCIP3(vec3 c) {
   return pow(c, vec3(2.2));
 }
 
+vec3 DCIP3TodiplayP3(vec3 c) {
+  return pow(clamp(c, vec3(0.), vec3(1.)), vec3(1./2.2));
+}
+
 vec3 rec709TosRGB(vec3 c) {
-  return pow(c, vec3(1.0/2.2));
+  return pow(clamp(c, vec3(0.), vec3(1.)), vec3(1.0/2.2));
 }
 
 mat3 matRec709ToCIEXYZ = mat3(
@@ -69,7 +82,8 @@ void main()
 {
   vec4 c = a_color;
   c = c * vec4(1.0 / 255.0);
-  c.rgb *= c.a;
+  float a = c.a;
+  c.a = 1.;
   if(u_use_p3 == 1) {
     c.rgb = diplayP3ToDCIP3(c.rgb);
     c.rgb = DCIP3ToCIEXYZ(c.rgb);
@@ -84,6 +98,7 @@ void main()
   vec4 outColor = c;
   outColor.rgb = CIEXYZToRec709(outColor.rgb);
   outColor.rgb = rec709TosRGB(outColor.rgb);
+  outColor.a = a;
   v_color = outColor;
 
   gl_Position = position;
