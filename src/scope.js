@@ -200,7 +200,7 @@ export function generateViewTransform(x, y, scopeCenter, worldScale, perspective
   ];
 
   const worldRotateTransform = mat4Multiply(
-    createRotateXYTransform(-x * 2 * Math.PI),
+    createRotateXYTransform(x * 2 * Math.PI),
     createRotateYZTransform(y * 2 * Math.PI / 2)
   );
 

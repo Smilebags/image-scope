@@ -5,14 +5,13 @@ in vec4 a_color;
 uniform mat4 u_view_transform;
 uniform int u_use_p3;
 /**
-u_position_colorspace {
+u_colorspace {
    0: xyY
    1: XYZ
    2: sRGB
-
 }
 */
-// uniform int u_position_colorspace;
+uniform int u_colorspace;
 
 out vec4 v_color;
 
@@ -80,6 +79,7 @@ vec3 CIEXYZtoCIExyY(vec3 c) {
 
 void main()
 {
+  // c is either sRGB or P3
   vec4 c = a_color;
   c = c * vec4(1.0 / 255.0);
   float a = c.a;
@@ -92,18 +92,34 @@ void main()
     c.rgb = rec709ToCIEXYZ(c.rgb);
   }
 
-  vec4 a_position = vec4(CIEXYZtoCIExyY(c.rgb), c.a);
-  vec4 position = u_view_transform * a_position;
+  // c is XYZ
 
-  vec4 outColor = c;
-  outColor.rgb = CIEXYZToRec709(outColor.rgb);
-  outColor.rgb = rec709TosRGB(outColor.rgb);
-  outColor.a = a;
-  v_color = outColor;
+  vec4 position = vec4(c.rgb, c.a);
+  if (u_colorspace == 0) {
+    // xyY
+    position = vec4(CIEXYZtoCIExyY(c.rgb), c.a);
+  } else if (u_colorspace == 2) {
+    // sRGB
+    position = vec4(
+      rec709TosRGB(CIEXYZToRec709(c.rgb)),
+      c.a
+    );
+  }
+
+  position = u_view_transform * position;
+
+  v_color = vec4(rec709TosRGB(CIEXYZToRec709(c.rgb)), a);
 
   gl_Position = position;
-  gl_Position.z = 0.0 - gl_Position.z;
-  gl_Position.z = gl_Position.z / (gl_Position.z + 1.0);
-  gl_Position.x = -gl_Position.x;
+
+  // Unsure why I need to do this but it fixes points z order rendering
+  if (u_colorspace == 0) {
+    // xyY
+    gl_Position.z = -gl_Position.z / (gl_Position.z + 1.0);
+  } else if (u_colorspace == 2) {
+    // sRGB
+    gl_Position.z *= -1.;
+  }
+  
   gl_PointSize = 2.0;
 }

@@ -85,7 +85,7 @@ export class GLScopeViewer {
     this.gl.bindVertexArray(vao);
   }
 
-  renderScope(viewTransform) {
+  renderScope(viewTransform, colorSpace) {
     if (!this.program || !this.pointsLength) {
       return;
     }
@@ -99,6 +99,17 @@ export class GLScopeViewer {
     // 4x4 matrix
     const viewTransformUniformLocation = this.gl.getUniformLocation(this.program, "u_view_transform");
     this.gl.uniformMatrix4fv(viewTransformUniformLocation, false, viewTransform);
+    
+    /**
+      u_colorspace {
+        0: xyY
+        1: XYZ
+        2: sRGB
+      }
+    */
+    const colorspaceUniformLocation = this.gl.getUniformLocation(this.program, "u_colorspace");
+    const colorSpaceValue = colorSpace === 'sRGB' ? 2 : 0;
+    this.gl.uniform1i(colorspaceUniformLocation, colorSpaceValue);
 
     const primitiveType = this.gl.POINTS;
     const elementOffset = 0;

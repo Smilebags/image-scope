@@ -7,17 +7,39 @@ import { GLScopeViewer } from './webgl.js';
 
 const FORCE_SRGB = true;
 
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+type TransformProps = {
+  worldScale: { x: number, y: number, z: number },
+  scopeCenter: { x: number, y: number, z: number },
+};
+
+type ColorSpaceName = 'xyY' | 'sRGB';
+
+const transformProperties: Record<ColorSpaceName, TransformProps>  = {
+  sRGB: {
+    worldScale: { x: 1, y: 1, z: 1 },
+    scopeCenter: { x: 0.5, y: 0.5, z: 0.5 },
+  },
+  xyY: {
+    worldScale: { x: 3, y: 3, z: 1 },
+    scopeCenter: { x: 0.3127, y: 0.329, z: 0.4 },
+  }
+}
+
+
 function html<T extends Element>(strings, ...keys) {
   const htmlString = strings.map((str, index) => `${str}${keys[index] || ''}`.trim()).join('').trim();
   const doc = new DOMParser().parseFromString(htmlString, "text/html");
   return doc.children[0].children[1].children[0] as T;
 }
+
 export class ImageScope {
   private srcEl?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement;
 
-  private worldScale = { x: 3, y: 3, z: 1 };
-  private scopeCenter = { x: 0.3127, y: 0.329, z: 0.4 };
-  private pointUpdateIntervalRef = null;
+  private colorSpace: ColorSpaceName = 'xyY';
+  private worldScaleMultiplier = 1;
+  private pointUpdateIntervalRef: number | null = null;
 
   private rotation = {
     x: 0.5,
@@ -39,7 +61,8 @@ export class ImageScope {
       y: 0,
     },
   };
-  private perspectiveStrength = 0;
+
+  private enablePerspective = false;
 
   private scopeSize = 512;
   private samplingResolution = 512;
@@ -52,12 +75,13 @@ export class ImageScope {
   private containerEl: HTMLDivElement;
   private imagePreviewEl: HTMLCanvasElement;
 
-  viewer?: GLScopeViewer;
+  viewer: GLScopeViewer;
 
   private scopeCtx?: WebGL2RenderingContext;
   private sourceCtx?: CanvasRenderingContext2D;
 
   constructor() {
+
     this.containerEl = this.createContainerEl();
     this.resultEl = this.createResultEl();
     this.imagePreviewEl = html`<canvas></canvas>`;
@@ -69,30 +93,90 @@ export class ImageScope {
       'X',
       'Close scope',
     );
-    const prevEl = this.createButtonEl(
+    // const prevEl = this.createButtonEl(
+    //   '#aaa',
+    //   () => this.prevElement(),
+    //   '<',
+    //   'Previous element',
+    // );
+    // const nextEl = this.createButtonEl(
+    //   '#aaa',
+    //   () => this.nextElement(),
+    //   '>',
+    //   'Next element',
+    // );
+    const sRGBButton = this.createButtonEl(
       '#aaa',
-      () => this.prevElement(),
-      '<',
-      'Previous element',
+      () => this.setColorSpace('sRGB'),
+      's',
+      'Set colorspace: sRGB',
     );
-    const nextEl = this.createButtonEl(
+    const perspectiveButton = this.createButtonEl(
       '#aaa',
-      () => this.nextElement(),
-      '>',
-      'Next element',
+      () => this.togglePerspective(),
+      'P',
+      'Toggle Perspective',
+    );
+    const pickerButton = this.createButtonEl(
+      '#aaa',
+      () => this.pickTarget(),
+      'Q',
+      'Pick target',
+    );
+    const xyYButton = this.createButtonEl(
+      '#aaa',
+      () => this.setColorSpace('xyY'),
+      'Y',
+      'Set colorspace: xyY',
     );
 
     const buttonContainer = this.createButtonContainerEl();
 
     buttonContainer.appendChild(this.draggerEl);
-    buttonContainer.appendChild(prevEl);
-    buttonContainer.appendChild(nextEl);
+    // buttonContainer.appendChild(prevEl);
+    // buttonContainer.appendChild(nextEl);
+    buttonContainer.appendChild(sRGBButton);
+    buttonContainer.appendChild(xyYButton);
+    buttonContainer.appendChild(perspectiveButton);
+    buttonContainer.appendChild(pickerButton);
     buttonContainer.appendChild(closeEl);
 
     this.containerEl.appendChild(this.resultEl);
     this.containerEl.appendChild(buttonContainer);
 
-    this.setActiveElement(this.findActiveElement());
+    // this.setActiveElement(this.findActiveElement());
+
+
+
+    // if (!this.srcEl) {
+    //   throw new Error();
+    // };
+    if (!this.scopeCtx) {
+      this.scopeCtx = this.createWebGLContext();
+    }
+    if (!this.sourceCtx) {
+      this.sourceCtx = this.createSourceCtx();
+    }
+    this.viewer = new GLScopeViewer(this.scopeCtx, this.useP3);
+  }
+
+  private setColorSpace(space: ColorSpaceName) {
+    this.colorSpace = space;
+  }
+
+  private togglePerspective() {
+    this.enablePerspective = !this.enablePerspective;
+  }
+
+  private async pickTarget() {
+    await sleep(10);
+    const handlerFn = (e) => {
+      console.log(e.target);
+      // TODO: Validate target element, don't remove listener if invalid
+      this.setActiveElement(e.target);
+      document.removeEventListener('click', handlerFn);
+    };
+    document.addEventListener('click', handlerFn);
   }
 
   show() {
@@ -116,31 +200,21 @@ export class ImageScope {
     this.showSrcElBorder();
   }
 
-  private nextElement() {
-    this.elementIndex++;
-    this.setActiveElement(this.findActiveElement());
-  }
+  // private nextElement() {
+  //   this.elementIndex++;
+  //   this.setActiveElement(this.findActiveElement());
+  // }
 
-  private prevElement() {
-    this.elementIndex = Math.max(0, this.elementIndex - 1);
-    this.setActiveElement(this.findActiveElement());
-  }
+  // private prevElement() {
+  //   this.elementIndex = Math.max(0, this.elementIndex - 1);
+  //   this.setActiveElement(this.findActiveElement());
+  // }
 
-  private findActiveElement(): HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | undefined {
-    return document.querySelectorAll('img, video, canvas')[this.elementIndex] as any;
-  }
+  // private findActiveElement(): HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | undefined {
+  //   return document.querySelectorAll('img, video, canvas')[this.elementIndex] as any;
+  // }
 
   async init() {
-    if (!this.srcEl) {
-      throw new Error();
-    };
-    if (!this.scopeCtx) {
-      this.scopeCtx = this.createWebGLContext();
-    }
-    if (!this.sourceCtx) {
-      this.sourceCtx = this.createSourceCtx();
-    }
-    this.viewer = new GLScopeViewer(this.scopeCtx, this.useP3);
     await this.viewer.init();
   }
 
@@ -152,12 +226,20 @@ export class ImageScope {
     const viewTransform = generateViewTransform(
       this.rotation.x,
       this.rotation.y,
-      this.scopeCenter,
-      this.worldScale,
-      this.perspectiveStrength
+      transformProperties[this.colorSpace].scopeCenter,
+      this.vec3Mult(transformProperties[this.colorSpace].worldScale, this.worldScaleMultiplier),
+      this.enablePerspective ? 0.4 : 0,
     );
-    this.viewer.renderScope(viewTransform);
+    this.viewer.renderScope(viewTransform, this.colorSpace);
   };
+
+  private vec3Mult({x, y, z}: {x: number, y: number, z: number}, m: number) {
+    return {
+      x: x * m,
+      y: y * m,
+      z: z * m,
+    }
+  }
 
   private createResultEl() {
     const resultEl: HTMLCanvasElement = html`<canvas style="width: 100%; height: 100%;"></canvas>`;
@@ -291,9 +373,7 @@ export class ImageScope {
   private onScopeMouseWheel = (e: WheelEvent) => {
     e.preventDefault();
     const scale = -e.deltaY / 1000;
-    this.worldScale.x *= 1.0 + scale;
-    this.worldScale.y *= 1.0 + scale;
-    this.worldScale.z *= 1.0 + scale;
+    this.worldScaleMultiplier *= 1.0 + scale;
     return false;
   };
 

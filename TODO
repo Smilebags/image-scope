@@ -1,6 +1,5 @@
-Add drag handle
 Add delete button
 Add reset transform button
-Add colour space selector
 Add P3 gamut support
 Optimise texture sampling
+Move all source files to TS
